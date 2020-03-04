@@ -14,6 +14,7 @@ import net.neoremind.kraps.rpc.netty.NettyRpcEnvFactory
 import org.neo4j.graphdb.{GraphDatabaseService, Result}
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
 
+import cn.pandadb.util.ValueConverter
 
 
 object Server {
@@ -55,19 +56,14 @@ class PandaRpcEndpoint(override val rpcEnv: RpcEnv) extends RpcEndpoint {
       // Neo4j Result => PandaResult
       val cols: mutable.Buffer[String] = result.columns().asScala
       val rows: mutable.Buffer[Map[String, AnyRef]] =  mutable.Buffer[Map[String, AnyRef]] ()
-      while (result.hasNext){
-        val row: mutable.Map[String, AnyRef] = result.next().asScala
-        rows.append(row.toMap)
-      }
-//      返回的结果必须是能序列化的
-      val pandaResult = new PandaResult(cols, rows)
-      println(pandaResult.getResults().size)
-      context.reply(pandaResult)
-//      context.reply(rows)
+
+      val records = ValueConverter.neo4jResultToDriverRecords(result)
+      println(records)
       println("replied")
       tx.success()
       tx.close()
-      Thread.sleep(5000)
+
+      context.reply(records)
       println("====")
     }
   }

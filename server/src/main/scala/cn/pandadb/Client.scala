@@ -3,12 +3,13 @@ package cn.pandadb
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.mutable
+
 import net.neoremind.kraps.RpcConf
 import net.neoremind.kraps.rpc.{RpcAddress, RpcEndpointRef, RpcEnv, RpcEnvClientConfig}
 import net.neoremind.kraps.rpc.netty.NettyRpcEnvFactory
-import org.neo4j.graphdb.Result
 
-import scala.collection.mutable
+import cn.pandadb.driver.result.InternalRecords
 
 
 object Client {
@@ -36,10 +37,22 @@ object Client {
     val config = RpcEnvClientConfig(rpcConf, "panda-client")
     val rpcEnv: RpcEnv = NettyRpcEnvFactory.create(config)
     val endPointRef: RpcEndpointRef = rpcEnv.setupEndpointRef(RpcAddress("localhost", 52345), "panda-service")
-    val cypher = "match (n) return count(n)"
-    val result = endPointRef.askWithRetry[PandaResult](RunQuery(cypher))
-    println(result.getResults())
+
+
+    val cypher1 = "match (n) return count(n)"
+    val result1 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher1))
+    println(result1.records)
+
+    val cypher2 = "match (n) return n.age"
+    val result2 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher2))
+    println(result2.records)
+
+    val cypher3 = "match (n) return n limit 2"
+    val result3 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher3))
+    println(result3.records)
+//    println(result.getResults())
 //    val result = endPointRef.askWithRetry[mutable.Buffer[Map[String, AnyRef]]](RunQuery(cypher))
-    println(result)
+//    println(result)
+
   }
 }

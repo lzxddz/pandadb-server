@@ -157,21 +157,22 @@ class PointValue(value: Point) extends Value {
   override def toString: String = value.toString
 }
 
-class ListValue[T](value: List[T]) extends Value {
-  override def getType(): String = Types.LIST.toString
-  override def asAny(): Any = value
-  override def asList[T]() = value
-
-  override def toString: String = value.toString
-}
-
-class MapValue[K,V](value: Map[K,V]) extends Value {
-  override def getType(): String = Types.MAP.toString
-  override def asAny(): Any = value
-  override def asMap[K,V]() = value
-
-  override def toString: String = value.toString
-}
+//class ListValue[T](value: List[T]) extends Value {
+//  val list = value
+//  override def getType(): String = Types.LIST.toString
+//  override def asAny(): Any = value
+//  override def asList[T]() = list
+//
+//  override def toString: String = value.toString
+//}
+//
+//class MapValue[K,V](value: Map[K,V]) extends Value {
+//  override def getType(): String = Types.MAP.toString
+//  override def asAny(): Any = value
+//  override def asMap[K,V]() = value
+//
+//  override def toString: String = value.toString
+//}
 
 class RelationshipValue(value: Relationship) extends Value {
   override def getType(): String = Types.RELATIONSHIP.toString

@@ -1,5 +1,5 @@
 package cn.pandadb.driver.values
 
-class Point {
+class Point extends Serializable {
 
 }

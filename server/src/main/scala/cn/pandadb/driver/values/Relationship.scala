@@ -1,5 +1,5 @@
 package cn.pandadb.driver.values
 
-class Relationship {
+class Relationship extends Serializable {
 
 }

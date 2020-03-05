@@ -1,5 +1,5 @@
 package cn.pandadb.driver.values
 
-class Path {
+class Path extends Serializable {
 
 }

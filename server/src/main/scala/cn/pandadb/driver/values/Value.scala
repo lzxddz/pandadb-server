@@ -1,5 +1,6 @@
 package cn.pandadb.driver.values
 
+import java.time.{Duration, LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 trait Value extends Serializable {
 
@@ -14,6 +15,18 @@ trait Value extends Serializable {
   def asFloat(): Float = { throw new NotImplementException()}
   def asString(): String = { throw new NotImplementException()}
   def asNode(): Node = { throw new NotImplementException()}
+  def asBytes(): Byte = { throw new NotImplementException()}
+  def asNumber(): Number = { throw new NotImplementException()}
+  def asDate(): LocalDate = { throw new NotImplementException()}
+  def asDateTime(): ZonedDateTime = { throw new NotImplementException()}
+  def asLocalTime(): LocalTime = { throw new NotImplementException()}
+  def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}
+  def asDuration(): Duration = { throw new NotImplementException()}
+  def asPoint(): Point = { throw new NotImplementException()}
+  def asList[T](): List[T] = { throw new NotImplementException()}
+  def asMap[K,V](): Map[K,V] = { throw new NotImplementException()}
+  def asRelationship(): Relationship = { throw new NotImplementException()}
+  def asPath(): Path = { throw new NotImplementException()}
 
   override def toString: String = "Driver Base Value"
 }
@@ -25,6 +38,7 @@ class NotImplementException(e: String="not implement error") extends Exception(e
 class AnyValue (value: Any) extends Value {
   override def getType(): String = Types.ANY.toString
   override def asAny(): Any =  value
+
   override def toString(): String = "Driver AnyValue"
 }
 
@@ -47,7 +61,7 @@ class IntegerValue (value: Long) extends Value {
 }
 
 class FloatValue (value: Float) extends Value {
-  override def getType(): String = Types.INTEGER.toString
+  override def getType(): String = Types.FLOAT.toString
   override def asAny(): Any =  value
   override def asFloat(): Float = value
 
@@ -64,7 +78,7 @@ class BooleanValue (value: Boolean) extends Value {
 
 object NullValue extends Value {
   val value = null
-  override def getType(): String = Types.INTEGER.toString
+  override def getType(): String = Types.NULL.toString
   override def asAny(): Any =  value
   override def isNull: Boolean = true
 
@@ -72,9 +86,105 @@ object NullValue extends Value {
 }
 
 class NodeValue(value: Node) extends Value {
-  override def getType(): String = Types.INTEGER.toString
+  override def getType(): String = Types.NODE.toString
   override def asAny(): Any =  value
   override def asNode(): Node = value
 
   override def toString(): String = value.toString
+}
+
+class BytesValue(value: Byte) extends Value {
+  override def getType(): String = Types.BYTES.toString
+  override def asAny(): Any = value
+  override def asBytes(): Byte = value
+
+  override def toString: String = value.toString
+}
+
+class NumberValue(value: Number) extends Value {
+  override def getType(): String = Types.NUMBER.toString
+  override def asAny(): Any = value
+  override def asNumber(): Number = value
+
+  override def toString: String = value.toString
+}
+
+class DateValue(value: LocalDate) extends Value {
+  override def getType(): String = Types.DATE.toString
+  override def asAny(): Any = value
+  override def asDate(): LocalDate = value
+
+  override def toString: String = value.toString
+}
+
+class DateTimeValue(value: ZonedDateTime) extends Value {
+  override def getType(): String = Types.DATE_TIME.toString
+  override def asAny(): Any = value
+  override def asDateTime(): ZonedDateTime = value
+
+  override def toString: String = value.toString
+}
+
+class LocalTimeValue(value: LocalTime) extends Value {
+  override def getType(): String = Types.LOCAL_TIME.toString
+  override def asAny(): Any = value
+  override def asLocalTime(): LocalTime = value
+
+  override def toString: String = value.toString
+}
+
+class LocalDateTimeValue(value: LocalDateTime) extends Value {
+  override def getType(): String = Types.LOCAL_DATE_TIME.toString
+  override def asAny(): Any = value
+  override def asLocalDateTime(): LocalDateTime = value
+
+  override def toString: String = value.toString
+}
+
+class DurationValue(value: Duration) extends Value {
+  override def getType(): String = Types.DURATION.toString
+  override def asAny(): Any = value
+  override def asDuration(): Duration = value
+
+  override def toString: String = value.toString
+}
+
+class PointValue(value: Point) extends Value {
+  override def getType(): String = Types.POINT.toString
+  override def asAny(): Any = value
+  override def asPoint(): Point = value
+
+  override def toString: String = value.toString
+}
+
+class ListValue[T](value: List[T]) extends Value {
+  override def getType(): String = Types.LIST.toString
+  override def asAny(): Any = value
+  override def asList[T]() = value
+
+  override def toString: String = value.toString
+}
+
+class MapValue[K,V](value: Map[K,V]) extends Value {
+  override def getType(): String = Types.MAP.toString
+  override def asAny(): Any = value
+  override def asMap[K,V]() = value
+
+  override def toString: String = value.toString
+}
+
+class RelationshipValue(value: Relationship) extends Value {
+  override def getType(): String = Types.RELATIONSHIP.toString
+  override def asAny(): Any = value
+  override def asRelationship(): Relationship = value
+
+  override def toString: String = value.toString
+}
+
+class PathValue(value: Path) extends Value {
+  override def getType(): String = Types.PATH.toString
+  override def asAny(): Any = value
+  override def asPath(): Path = value
+
+  override def toString: String = value.toString
 }

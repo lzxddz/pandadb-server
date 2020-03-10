@@ -5,6 +5,7 @@ import java.time.temporal.{Temporal, TemporalAmount, TemporalUnit, UnsupportedTe
 import java.util
 import java.util.Arrays.asList
 import java.util.Collections.unmodifiableList
+import java.util.Objects
 
 trait IsoDuration extends TemporalAmount{
   def months(): Long
@@ -16,7 +17,8 @@ trait IsoDuration extends TemporalAmount{
   def nanoseconds(): Int
 }
 
-class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extends IsoDuration {
+class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extends IsoDuration with Serializable {
+  val NANOS_PER_SECOND = 1000000000
   val SUPPORTED_UNITS: util.List[TemporalUnit] = unmodifiableList(asList(MONTHS, DAYS, SECONDS, NANOS))
 
   override def months(): Long = months
@@ -37,7 +39,8 @@ class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extend
 
   override def getUnits: util.List[TemporalUnit] = SUPPORTED_UNITS
 
-  override def addTo(temporal: Temporal): Temporal = {
+  override def addTo(temp: Temporal): Temporal = {
+    var temporal = temp
     if (months != 0) temporal = temporal.plus(months, MONTHS)
     if (days != 0) temporal = temporal.plus(days, DAYS)
     if (seconds != 0) temporal = temporal.plus(seconds, SECONDS)
@@ -45,11 +48,33 @@ class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extend
     temporal
   }
 
-  override def subtractFrom(temporal: Temporal): Temporal = {
+  override def subtractFrom(temp: Temporal): Temporal = {
+    var temporal = temp
     if (months != 0) temporal = temporal.minus(months, MONTHS)
     if (days != 0) temporal = temporal.minus(days, DAYS)
     if (seconds != 0) temporal = temporal.minus(seconds, SECONDS)
     if (nanoseconds != 0) temporal = temporal.minus(nanoseconds, NANOS)
     temporal
+  }
+
+  override def toString: String = {
+    val sb = new StringBuilder
+    sb.append('P')
+    sb.append(months).append('M')
+    sb.append(days).append('D')
+    sb.append('T')
+    if (seconds < 0 && nanoseconds > 0) if (seconds == -1) sb.append("-0")
+    else sb.append(seconds + 1)
+    else sb.append(seconds)
+    if (nanoseconds > 0) {
+      val pos = sb.length
+      // append nanoseconds as a 10-digit string with leading '1' that is later replaced by a '.'
+      if (seconds < 0) sb.append(2 * NANOS_PER_SECOND - nanoseconds)
+      else sb.append(NANOS_PER_SECOND + nanoseconds)
+      sb.setCharAt(pos, '.') // replace '1' with '.'
+
+    }
+    sb.append('S')
+    sb.toString
   }
 }

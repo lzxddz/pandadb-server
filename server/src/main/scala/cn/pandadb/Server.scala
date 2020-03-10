@@ -37,15 +37,21 @@ class PandaRpcEndpoint(override val rpcEnv: RpcEnv) extends RpcEndpoint {
 
   override def onStart(): Unit = {
     println("start panda server rpc endpoint")
-//    val tx = db.beginTx()
-//    val query =
-//      """CREATE (n1:Person { name:'test01', age:10, adult:False})
-//        |CREATE (n2:Person:Man { name:'test02', age:20, adult:True})
-//        |RETURN id(n1),id(n2)
-//      """.stripMargin
-//    db.execute(query)
-//    tx.success()
-//    tx.close()
+    val tx = db.beginTx()
+    val query =
+      """
+          |CREATE (n1:Person { name:'test01', age:10, adult:False, born:'2020/03/05'})
+          |CREATE (n2:Person:Man { name:'test02', age:20, adult:True})
+          |CREATE (n3:Person { name:'test03',born1:date('2019-01-01'), born2:time('12:05:01'), born3:datetime('2019-01-02T12:05:15[Australia/Eucla]'), born4:datetime('2015-06-24T12:50:35.000000556Z'), dur:duration({days:1})} )
+          |CREATE p =(vic:Person{ name:'vic',title:"Developer" })-[:WorksAt]->(michael:Person { name: 'Michael',title:"Manager" })
+          |CREATE (n4:Person:Student{name: 'test04',age:15, sex:'male', school: 'No1 Middle School'}),
+          |(n5:Person:Teacher{name: 'test05', age: 30, sex:'male', school: 'No1 Middle School', class: 'math'}),
+          |(n6:Person:Teacher{name: 'test06', age: 40, sex:'female', school: 'No1 Middle School', class: 'chemistry'})
+          |CREATE (n7:Person { name:'test07', age:10})-[r:WorksAt{name:'test08', age:10, adult:False, born:'2020/03/05'}]->(neo:Company{business:'Software'})
+      """.stripMargin
+    db.execute(query)
+    tx.success()
+    tx.close()
   }
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {

@@ -1,6 +1,8 @@
 package cn.pandadb.driver.values
 
-import java.time.{Duration, LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
+import java.time.temporal.{Temporal, TemporalAmount, TemporalUnit}
+import java.time.{Duration, LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
+import java.util
 
 trait Value extends Serializable {
 
@@ -18,6 +20,7 @@ trait Value extends Serializable {
   def asBytes(): Byte = { throw new NotImplementException()}
   def asNumber(): Number = { throw new NotImplementException()}
   def asDate(): LocalDate = { throw new NotImplementException()}
+  def asTime(): OffsetTime = { throw new NotImplementException()}
   def asDateTime(): ZonedDateTime = { throw new NotImplementException()}
   def asLocalTime(): LocalTime = { throw new NotImplementException()}
   def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}
@@ -69,9 +72,9 @@ class FloatValue (value: Float) extends Value {
 }
 
 class BooleanValue (value: Boolean) extends Value {
-  override def getType(): String = Types.INTEGER.toString
+  override def getType(): String = Types.BOOLEAN.toString
   override def asAny(): Any =  value
-  override def asBoolean(): Boolean = value
+  override def asBoolean(): Boolean = value.asInstanceOf[Boolean]
 
   override def toString: String = value.toString
 }
@@ -117,6 +120,14 @@ class DateValue(value: LocalDate) extends Value {
   override def toString: String = value.toString
 }
 
+class TimeValue(value: OffsetTime) extends Value {
+  override def getType(): String = Types.TIME.toString
+  override def asAny(): Any = value
+  override def asTime(): OffsetTime = value
+
+  override def toString: String = value.toString
+}
+
 class DateTimeValue(value: ZonedDateTime) extends Value {
   override def getType(): String = Types.DATE_TIME.toString
   override def asAny(): Any = value
@@ -146,7 +157,7 @@ class DurationValue(value: Duration) extends Value {
   override def asAny(): Any = value
   override def asDuration(): Duration = value
 
-  override def toString: String = value.toString
+  override def toString: String = DurationValue.super.toString
 }
 
 class PointValue(value: Point) extends Value {

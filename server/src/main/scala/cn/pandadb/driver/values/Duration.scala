@@ -7,17 +7,17 @@ import java.util.Arrays.asList
 import java.util.Collections.unmodifiableList
 import java.util.Objects
 
-trait IsoDuration extends TemporalAmount{
+trait IsoDuration extends TemporalAmount with Serializable {
   def months(): Long
 
   def days(): Long
 
   def seconds(): Long
 
-  def nanoseconds(): Int
+  def nanoseconds(): Long
 }
 
-class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extends IsoDuration with Serializable {
+class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Long) extends IsoDuration with Serializable {
   val NANOS_PER_SECOND = 1000000000
   val SUPPORTED_UNITS: util.List[TemporalUnit] = unmodifiableList(asList(MONTHS, DAYS, SECONDS, NANOS))
 
@@ -27,7 +27,7 @@ class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extend
 
   override def seconds(): Long = seconds
 
-  override def nanoseconds(): Int = nanoseconds
+  override def nanoseconds(): Long = nanoseconds
 
   override def get(unit: TemporalUnit): Long = {
     if (unit eq MONTHS)  months
@@ -68,10 +68,9 @@ class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Int) extend
     else sb.append(seconds)
     if (nanoseconds > 0) {
       val pos = sb.length
-      // append nanoseconds as a 10-digit string with leading '1' that is later replaced by a '.'
       if (seconds < 0) sb.append(2 * NANOS_PER_SECOND - nanoseconds)
       else sb.append(NANOS_PER_SECOND + nanoseconds)
-      sb.setCharAt(pos, '.') // replace '1' with '.'
+      sb.setCharAt(pos, '.')
 
     }
     sb.append('S')

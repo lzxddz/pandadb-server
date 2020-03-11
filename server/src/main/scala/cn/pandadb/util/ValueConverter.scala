@@ -1,6 +1,6 @@
 package cn.pandadb.util
 
-import cn.pandadb.driver.values.{Duration, Node, NodeValue, Relationship, RelationshipValue, Value}
+import cn.pandadb.driver.values.{Duration, Node, NodeValue, Point, Point2D, Relationship, RelationshipValue, Value}
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
 
 import scala.collection.mutable
@@ -34,7 +34,10 @@ object ValueConverter {
     else if (v.isInstanceOf[LocalTime]) { new values.LocalTimeValue(v.asInstanceOf[LocalTime]) }
     else if (v.isInstanceOf[LocalDateTime]) { new values.LocalDateTimeValue(v.asInstanceOf[LocalDateTime]) }
     else if (v.isInstanceOf[RelationshipProxy]) { convertRelationship(v.asInstanceOf[RelationshipProxy])}
-    else if (v.isInstanceOf[PathProxy]) {convertPath(v.asInstanceOf[PathProxy])}
+    else if (v.isInstanceOf[PathProxy]) { convertPath(v.asInstanceOf[PathProxy])}
+    else if (v.isInstanceOf[Point]) { convertPoint(v.asInstanceOf[Point])}
+    else if (v.isInstanceOf[List[Value]]) { new values.ListValue(v.asInstanceOf[List[Value]]) }
+    else if (v.isInstanceOf[Map[String, Value]]) { new values.MapValue(v.asInstanceOf[Map[String, Value]]) }
     else if (v == null) { values.NullValue }
     else {new values.AnyValue(v)}
   }
@@ -95,12 +98,33 @@ object ValueConverter {
   }
 
   def convertDuration(duration: Duration): values.DurationValue = {
-    val months = duration.months
-    val days = duration.days
-    val seconds = duration.seconds
-    val nano = duration.nanoseconds
+    val temp = duration.getUnits
+    val months = duration.get(temp.get(0))
+    val days = duration.get(temp.get(1))
+    val seconds = duration.get(temp.get(2))
+    val nano = duration.get(temp.get(3))
+    println(months + " " + days + " " + seconds)
     val dur = new values.Duration(months, days, seconds, nano)
     new values.DurationValue(dur)
+  }
+
+  def convertPoint(point: Point) : values.PointValue = {
+    if (point.isInstanceOf[Point2D]) {
+      val ss = point.srid
+      val xx = point.x
+      val yy = point.y
+      val p = new values.Point2D(ss, xx, yy)
+      new values.PointValue(p)
+    }
+    else {
+      val ss = point.srid
+      val xx = point.x
+      val yy = point.y
+      val zz = point.z
+      val p = new values.Point3D(ss, xx, yy, zz)
+      new values.PointValue(p)
+    }
+
   }
 
   def neo4jResultToDriverRecords(result: Neo4jResult): InternalRecords = {

@@ -53,9 +53,9 @@ object Client {
     val result3 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher3))
     print("Result3:   ")
     println(result3.records)
-//    println(result.getResults())
-//    val result = endPointRef.askWithRetry[mutable.Buffer[Map[String, AnyRef]]](RunQuery(cypher))
-//    println(result)
+    //    println(result.getResults())
+    //    val result = endPointRef.askWithRetry[mutable.Buffer[Map[String, AnyRef]]](RunQuery(cypher))
+    //    println(result)
     val cypher4 = "match (n) return n.name"
     val result4 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher4))
     print("Result4:   ")
@@ -91,9 +91,9 @@ object Client {
     print("Result10:   ")
     println(result10.records)
 
-//    val cypher11 = "match (n) return n.dur"
-//    val result11 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher11))
-//    println(result11.records)
+    //    val cypher11 = "match (n) where n.name = 'test03' return n.dur"
+    //    val result11 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher11))
+    //    println(result11.records)
 
     val cypher12 = "match (n:Person {name:'test07', age:10})-[r]->(neo:Company{business:'Software'}) return r"
     val result12 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher12))
@@ -114,10 +114,10 @@ object Client {
     val result15 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher15))
     print("Result15:   ")
     println(result15.records)
-
-//    val cypher16 = "match p=(vic:Person{name:'vic'})-[]->(michael:Person{name:'Michael'}) return p"
-//    val result16 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher16))
-//    println(result16.records)
+    //
+    //    val cypher16 = "match p=(vic:Person{name:'vic'})-[]->(michael:Person{name:'Michael'}) return p"
+    //    val result16 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher16))
+    //    println(result16.records)
 
     val cypher17 = "match (n:Person) return n"
     val result17 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher17))
@@ -153,5 +153,41 @@ object Client {
     val result23 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher23))
     print("Result23:   ")
     println(result23.records)
+
+    val cypher24 = "CREATE (n1:Person { name:'test12', age:10, adult:False, born:localtime()}) return n1.born"
+    val result24 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher24))
+    print("Result24:   ")
+    println(result24.records)
+
+    val cypher25 = "CREATE (n1:Person { name:'test12', age:10, adult:False, born:localdatetime()}) return n1.born"
+    val result25 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher25))
+    print("Result25:   ")
+    println(result25.records)
+
+    val cypher26 = "match (n1:Person) return min(n1.age),max(n1.age)"
+    val result26 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher26))
+    print("Result26:   ")
+    println(result26.records)
+
+//    val cypher27 = "create (n:Person{location:point({longitude: 12.78, latitude: 56.7 })}) return n.location"
+//    val result27 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher27))
+//    print("Result27:   ")
+//    println(result27.records)
+//
+//    val cypher28 = "create (n:Person{location:point({longitude: 12.78, latitude: 56.7, height: 100 })}) return n.location"
+//    val result28 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher28))
+//    print("Result28:   ")
+//    println(result28.records)
+
+    val cypher29 = "create (n1:Person { name:'test13',titles:['ceo','ui','dev'], salaries: [10000, 20000, 30597, 500954], boolattr: [False, True, false, true]}) return n1.titles, n1.salaries"
+    val result29 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher29))
+    print("Result29:   ")
+    println(result29.records)
+
+    val cypher30 = "create (n1:Person { name:'test13',titles:['ceo','ui','dev'], salaries: [10000, 20000, 30597, 500954], boolattr: [False, True, false, true]}) return n1"
+    val result30 = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher30))
+    print("Result30:   ")
+    println(result30.records)
+
   }
 }

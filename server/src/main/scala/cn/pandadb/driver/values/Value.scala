@@ -11,25 +11,25 @@ trait Value extends Serializable {
   def isNull(): Boolean =  { throw new NotImplementException()}
 
   def asAny(): Any = { throw new NotImplementException()}
-  def asInt(): Int = { throw new NotImplementException()}
-  def asLong(): Long = { throw new NotImplementException()}
-  def asBoolean(): Boolean = { throw new NotImplementException()}
-  def asFloat(): Float = { throw new NotImplementException()}
-  def asString(): String = { throw new NotImplementException()}
-  def asNode(): Node = { throw new NotImplementException()}
-  def asBytes(): Byte = { throw new NotImplementException()}
-  def asNumber(): Number = { throw new NotImplementException()}
-  def asDate(): LocalDate = { throw new NotImplementException()}
-  def asTime(): OffsetTime = { throw new NotImplementException()}
-  def asDateTime(): ZonedDateTime = { throw new NotImplementException()}
-  def asLocalTime(): LocalTime = { throw new NotImplementException()}
-  def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}
-  def asDuration(): Duration = { throw new NotImplementException()}
+  def asInt(): Int = { throw new NotImplementException()}//
+  def asLong(): Long = { throw new NotImplementException()}//
+  def asBoolean(): Boolean = { throw new NotImplementException()}//
+  def asFloat(): Float = { throw new NotImplementException()}//
+  def asString(): String = { throw new NotImplementException()}//
+  def asNode(): Node = { throw new NotImplementException()}//
+  def asBytes(): Byte = { throw new NotImplementException()}//
+  def asNumber(): Number = { throw new NotImplementException()}//
+  def asDate(): LocalDate = { throw new NotImplementException()}//
+  def asTime(): OffsetTime = { throw new NotImplementException()}//
+  def asDateTime(): ZonedDateTime = { throw new NotImplementException()}//
+  def asLocalTime(): LocalTime = { throw new NotImplementException()}//
+  def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}//
+  def asDuration(): Duration = { throw new NotImplementException()}//////////////////
   def asPoint(): Point = { throw new NotImplementException()}
-  def asList[T](): List[T] = { throw new NotImplementException()}
-  def asMap[K,V](): Map[K,V] = { throw new NotImplementException()}
-  def asRelationship(): Relationship = { throw new NotImplementException()}
-  def asPath(): Path = { throw new NotImplementException()}
+  def asList(): List[Value] = { throw new NotImplementException()}
+  def asMap(): Map[String, Value] = { throw new NotImplementException()}
+  def asRelationship(): Relationship = { throw new NotImplementException()}//
+  def asPath(): Path = { throw new NotImplementException()}//////////////////
 
   override def toString: String = "Driver Base Value"
 }
@@ -157,7 +157,7 @@ class DurationValue(value: Duration) extends Value {
   override def asAny(): Any = value
   override def asDuration(): Duration = value
 
-  override def toString: String = DurationValue.super.toString
+  override def toString: String = value.toString
 }
 
 class PointValue(value: Point) extends Value {
@@ -168,22 +168,22 @@ class PointValue(value: Point) extends Value {
   override def toString: String = value.toString
 }
 
-//class ListValue[T](value: List[T]) extends Value {
-//  val list = value
-//  override def getType(): String = Types.LIST.toString
-//  override def asAny(): Any = value
-//  override def asList[T]() = list
-//
-//  override def toString: String = value.toString
-//}
-//
-//class MapValue[K,V](value: Map[K,V]) extends Value {
-//  override def getType(): String = Types.MAP.toString
-//  override def asAny(): Any = value
-//  override def asMap[K,V]() = value
-//
-//  override def toString: String = value.toString
-//}
+class ListValue(value: List[Value]) extends Value {
+  val list = value
+  override def getType(): String = Types.LIST.toString
+  override def asAny(): Any = value
+  override def asList(): List[Value] = value
+
+  override def toString: String = value.toString
+}
+
+class MapValue(value: Map[String, Value]) extends Value {
+  override def getType(): String = Types.MAP.toString
+  override def asAny(): Any = value
+  override def asMap(): Map[String, Value] = value
+
+  override def toString: String = value.toString
+}
 
 class RelationshipValue(value: Relationship) extends Value {
   override def getType(): String = Types.RELATIONSHIP.toString

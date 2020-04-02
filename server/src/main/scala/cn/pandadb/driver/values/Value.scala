@@ -1,8 +1,11 @@
 package cn.pandadb.driver.values
 
 import java.time.temporal.{Temporal, TemporalAmount, TemporalUnit}
-import java.time.{Duration, LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
+import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
 import java.util
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable.{ArrayBuffer, Buffer, ListBuffer}
 
 trait Value extends Serializable {
 
@@ -11,41 +14,42 @@ trait Value extends Serializable {
   def isNull(): Boolean =  { throw new NotImplementException()}
 
   def asAny(): Any = { throw new NotImplementException()}
-  def asInt(): Int = { throw new NotImplementException()}//
-  def asLong(): Long = { throw new NotImplementException()}//
-  def asBoolean(): Boolean = { throw new NotImplementException()}//
-  def asFloat(): Float = { throw new NotImplementException()}//
-  def asString(): String = { throw new NotImplementException()}//
-  def asNode(): Node = { throw new NotImplementException()}//
-  def asBytes(): Byte = { throw new NotImplementException()}//
-  def asNumber(): Number = { throw new NotImplementException()}//
-  def asDate(): LocalDate = { throw new NotImplementException()}//
-  def asTime(): OffsetTime = { throw new NotImplementException()}//
-  def asDateTime(): ZonedDateTime = { throw new NotImplementException()}//
-  def asLocalTime(): LocalTime = { throw new NotImplementException()}//
-  def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}//
-  def asDuration(): Duration = { throw new NotImplementException()}//////////////////
-  def asPoint(): Point = { throw new NotImplementException()}
-  def asList(): List[Value] = { throw new NotImplementException()}
+  def asInt(): Int = { throw new NotImplementException()}
+  def asLong(): Long = { throw new NotImplementException()}
+  def asBoolean(): Boolean = { throw new NotImplementException()}
+  def asFloat(): Double = { throw new NotImplementException()}
+  def asString(): String = { throw new NotImplementException()}
+  def asNode(): Node = { throw new NotImplementException()}
+  def asBytes(): Byte = { throw new NotImplementException()}
+  def asNumber(): Number = { throw new NotImplementException()}
+  def asDate(): LocalDate = { throw new NotImplementException()}
+  def asTime(): OffsetTime = { throw new NotImplementException()}
+  def asDateTime(): ZonedDateTime = { throw new NotImplementException()}
+  def asLocalTime(): LocalTime = { throw new NotImplementException()}
+  def asLocalDateTime(): LocalDateTime = { throw new NotImplementException()}
+  def asDuration(): Duration = { throw new NotImplementException()}
+  def asPoint2D(): Point2D = { throw new NotImplementException()}
+  def asPoint3D(): Point3D = { throw new NotImplementException()}
+  def asList(): Buffer[Value] = { throw new NotImplementException()}
   def asMap(): Map[String, Value] = { throw new NotImplementException()}
-  def asRelationship(): Relationship = { throw new NotImplementException()}//
-  def asPath(): Path = { throw new NotImplementException()}//////////////////
+  def asRelationship(): Relationship = { throw new NotImplementException()}
+  def asPath(): Path = { throw new NotImplementException()}
 
   override def toString: String = "Driver Base Value"
 }
 
-class NotImplementException(e: String="not implement error") extends Exception(e) {
+case class NotImplementException(e: String="not implement error") extends Exception(e) {
 
 }
 
-class AnyValue (value: Any) extends Value {
+case class AnyValue (value: Any) extends Value {
   override def getType(): String = Types.ANY.toString
   override def asAny(): Any =  value
 
   override def toString(): String = "Driver AnyValue"
 }
 
-class StringValue (value: String) extends Value {
+case class StringValue (value: String) extends Value {
   override def getType(): String = Types.STRING.toString
   override def asAny(): Any =  value
   override def asString(): String = value
@@ -53,7 +57,7 @@ class StringValue (value: String) extends Value {
   override def toString: String = value
 }
 
-class IntegerValue (value: Long) extends Value {
+case class IntegerValue (value: Long) extends Value {
   override def getType(): String = Types.INTEGER.toString
   override def asAny(): Any =  value
   override def asInt(): Int = value.asInstanceOf[Int]
@@ -63,15 +67,15 @@ class IntegerValue (value: Long) extends Value {
 
 }
 
-class FloatValue (value: Float) extends Value {
+case class FloatValue (value: Double) extends Value {
   override def getType(): String = Types.FLOAT.toString
   override def asAny(): Any =  value
-  override def asFloat(): Float = value
+  override def asFloat(): Double = value
 
   override def toString: String = value.toString
 }
 
-class BooleanValue (value: Boolean) extends Value {
+case class BooleanValue (value: Boolean) extends Value {
   override def getType(): String = Types.BOOLEAN.toString
   override def asAny(): Any =  value
   override def asBoolean(): Boolean = value.asInstanceOf[Boolean]
@@ -88,7 +92,7 @@ object NullValue extends Value {
   override def toString(): String = {"Driver NullValue"}
 }
 
-class NodeValue(value: Node) extends Value {
+case class NodeValue(value: Node) extends Value {
   override def getType(): String = Types.NODE.toString
   override def asAny(): Any =  value
   override def asNode(): Node = value
@@ -96,7 +100,7 @@ class NodeValue(value: Node) extends Value {
   override def toString(): String = value.toString
 }
 
-class BytesValue(value: Byte) extends Value {
+case class BytesValue(value: Byte) extends Value {
   override def getType(): String = Types.BYTES.toString
   override def asAny(): Any = value
   override def asBytes(): Byte = value
@@ -104,7 +108,7 @@ class BytesValue(value: Byte) extends Value {
   override def toString: String = value.toString
 }
 
-class NumberValue(value: Number) extends Value {
+case class NumberValue(value: Number) extends Value {
   override def getType(): String = Types.NUMBER.toString
   override def asAny(): Any = value
   override def asNumber(): Number = value
@@ -112,7 +116,7 @@ class NumberValue(value: Number) extends Value {
   override def toString: String = value.toString
 }
 
-class DateValue(value: LocalDate) extends Value {
+case class DateValue(value: LocalDate) extends Value {
   override def getType(): String = Types.DATE.toString
   override def asAny(): Any = value
   override def asDate(): LocalDate = value
@@ -120,7 +124,7 @@ class DateValue(value: LocalDate) extends Value {
   override def toString: String = value.toString
 }
 
-class TimeValue(value: OffsetTime) extends Value {
+case class TimeValue(value: OffsetTime) extends Value {
   override def getType(): String = Types.TIME.toString
   override def asAny(): Any = value
   override def asTime(): OffsetTime = value
@@ -128,7 +132,7 @@ class TimeValue(value: OffsetTime) extends Value {
   override def toString: String = value.toString
 }
 
-class DateTimeValue(value: ZonedDateTime) extends Value {
+case class DateTimeValue(value: ZonedDateTime) extends Value {
   override def getType(): String = Types.DATE_TIME.toString
   override def asAny(): Any = value
   override def asDateTime(): ZonedDateTime = value
@@ -136,7 +140,7 @@ class DateTimeValue(value: ZonedDateTime) extends Value {
   override def toString: String = value.toString
 }
 
-class LocalTimeValue(value: LocalTime) extends Value {
+case class LocalTimeValue(value: LocalTime) extends Value {
   override def getType(): String = Types.LOCAL_TIME.toString
   override def asAny(): Any = value
   override def asLocalTime(): LocalTime = value
@@ -144,7 +148,7 @@ class LocalTimeValue(value: LocalTime) extends Value {
   override def toString: String = value.toString
 }
 
-class LocalDateTimeValue(value: LocalDateTime) extends Value {
+case class LocalDateTimeValue(value: LocalDateTime) extends Value {
   override def getType(): String = Types.LOCAL_DATE_TIME.toString
   override def asAny(): Any = value
   override def asLocalDateTime(): LocalDateTime = value
@@ -152,7 +156,7 @@ class LocalDateTimeValue(value: LocalDateTime) extends Value {
   override def toString: String = value.toString
 }
 
-class DurationValue(value: Duration) extends Value {
+case class DurationValue(value: Duration) extends Value {
   override def getType(): String = Types.DURATION.toString
   override def asAny(): Any = value
   override def asDuration(): Duration = value
@@ -160,24 +164,24 @@ class DurationValue(value: Duration) extends Value {
   override def toString: String = value.toString
 }
 
-class PointValue(value: Point) extends Value {
+case class PointValue(value: Point) extends Value {
   override def getType(): String = Types.POINT.toString
   override def asAny(): Any = value
-  override def asPoint(): Point = value
+  override def asPoint2D(): Point2D = new Point2D(value.srid, value.x, value.y)
+  override def asPoint3D(): Point3D = new Point3D(value.srid, value.x, value.y, value.z)
 
   override def toString: String = value.toString
 }
 
-class ListValue(value: List[Value]) extends Value {
-  val list = value
+case class ListValue(value: ArrayBuffer[Value]) extends Value {
   override def getType(): String = Types.LIST.toString
   override def asAny(): Any = value
-  override def asList(): List[Value] = value
+  override def asList(): Buffer[Value] = value
 
   override def toString: String = value.toString
 }
 
-class MapValue(value: Map[String, Value]) extends Value {
+case class MapValue(value: Map[String, Value]) extends Value {
   override def getType(): String = Types.MAP.toString
   override def asAny(): Any = value
   override def asMap(): Map[String, Value] = value
@@ -185,7 +189,7 @@ class MapValue(value: Map[String, Value]) extends Value {
   override def toString: String = value.toString
 }
 
-class RelationshipValue(value: Relationship) extends Value {
+case class RelationshipValue(value: Relationship) extends Value {
   override def getType(): String = Types.RELATIONSHIP.toString
   override def asAny(): Any = value
   override def asRelationship(): Relationship = value
@@ -193,10 +197,10 @@ class RelationshipValue(value: Relationship) extends Value {
   override def toString: String = value.toString
 }
 
-class PathValue(value: Path) extends Value {
+case class PathValue(value: Path) extends Value {
   override def getType(): String = Types.PATH.toString
   override def asAny(): Any = value
   override def asPath(): Path = value
 
-  override def toString: String = value.toString
+  override def toString: String = value.toString(value)
 }

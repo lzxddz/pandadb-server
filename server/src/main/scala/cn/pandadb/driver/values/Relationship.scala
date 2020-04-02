@@ -1,7 +1,12 @@
 package cn.pandadb.driver.values
 
-class Relationship(id: Long,
-                   props: Map[String, Value],
-                   startNode: Long,
-                   endNode: Long) extends Serializable {
+case class Relationship(id: Long,
+                   props: Map[String, AnyRef],
+                   startNode: Node,
+                   endNode: Node,
+                   relationshipType: RelationshipType) extends Serializable {
+
+  override def equals(o: Any): Boolean = {
+    o.isInstanceOf[Relationship] && this.id == o.asInstanceOf[Relationship].id
+  }
 }

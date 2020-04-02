@@ -1,5 +1,7 @@
 package cn.pandadb.driver.values
 
+import java.time.Period
+import java.time.Duration
 import java.time.temporal.ChronoUnit.{DAYS, MONTHS, NANOS, SECONDS}
 import java.time.temporal.{Temporal, TemporalAmount, TemporalUnit, UnsupportedTemporalTypeException}
 import java.util
@@ -17,17 +19,17 @@ trait IsoDuration extends TemporalAmount with Serializable {
   def nanoseconds(): Long
 }
 
-class Duration(months: Long, days: Long, seconds: Long, nanoseconds: Long) extends IsoDuration with Serializable {
+case class Duration(month: Long, day: Long, second: Long, nanosecond: Long) extends IsoDuration with Serializable {
   val NANOS_PER_SECOND = 1000000000
   val SUPPORTED_UNITS: util.List[TemporalUnit] = unmodifiableList(asList(MONTHS, DAYS, SECONDS, NANOS))
 
-  override def months(): Long = months
+  override def months(): Long = month
 
-  override def days(): Long = days
+  override def days(): Long = day
 
-  override def seconds(): Long = seconds
+  override def seconds(): Long = second
 
-  override def nanoseconds(): Long = nanoseconds
+  override def nanoseconds(): Long = nanosecond
 
   override def get(unit: TemporalUnit): Long = {
     if (unit eq MONTHS)  months

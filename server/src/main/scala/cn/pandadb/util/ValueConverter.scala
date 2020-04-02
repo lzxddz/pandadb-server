@@ -1,15 +1,20 @@
 package cn.pandadb.util
 
-import cn.pandadb.driver.values.{Duration, Node, NodeValue, Point, Point2D, Relationship, RelationshipValue, Value}
+import java.time.temporal.{Temporal, TemporalAccessor}
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
 
+import cn.pandadb.driver.values.{Duration, Label, Node, NodeValue, Point, Point2D, Relationship, RelationshipType, RelationshipValue, Value}
 import scala.collection.mutable
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
 import org.neo4j.graphdb.{Result => Neo4jResult}
 import cn.pandadb.driver.result.{InternalRecords, Record}
 import cn.pandadb.driver.values
-import org.neo4j.kernel.impl.core.{NodeProxy, PathProxy, RelationshipProxy}
+import org.neo4j.kernel.impl.core.{NodeProxy, RelationshipProxy}
+import org.neo4j.graphdb.Path
+import org.neo4j.values.storable.{DurationValue => Neo4jDurationValue, PointValue => Neo4jPointValue}
+import org.neo4j.graphdb.{Label => Neo4jLabel, Node => Neo4jNode, Relationship => Neo4jRelationship, RelationshipType => Neo4jType}
+import cn.pandadb.driver.values.Label
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -24,26 +29,30 @@ object ValueConverter {
     else if (v.isInstanceOf[Int]) { new values.IntegerValue(v.asInstanceOf[Int]) }
     else if (v.isInstanceOf[Long]) { new values.IntegerValue(v.asInstanceOf[Long]) }
     else if (v.isInstanceOf[String]) { new values.StringValue(v.asInstanceOf[String]) }
-    else if (v.isInstanceOf[Float]) { new values.FloatValue(v.asInstanceOf[Float]) }
+    else if (v.isInstanceOf[Double]) { new values.FloatValue(v.asInstanceOf[Double]) }
     else if (v.isInstanceOf[Boolean]) { new values.BooleanValue(v.asInstanceOf[Boolean]) }
     else if (v.isInstanceOf[Number]) { new values.NumberValue(v.asInstanceOf[Number]) }
-    else if (v.isInstanceOf[Duration]) { convertDuration(v.asInstanceOf[Duration]) }
+    else if (v.isInstanceOf[Neo4jDurationValue]) { convertDuration(v.asInstanceOf[Neo4jDurationValue]) }
     else if (v.isInstanceOf[LocalDate]) { new values.DateValue(v.asInstanceOf[LocalDate]) }
     else if (v.isInstanceOf[OffsetTime]) { new values.TimeValue(v.asInstanceOf[OffsetTime]) }
     else if (v.isInstanceOf[ZonedDateTime]) { new values.DateTimeValue(v.asInstanceOf[ZonedDateTime]) }
     else if (v.isInstanceOf[LocalTime]) { new values.LocalTimeValue(v.asInstanceOf[LocalTime]) }
     else if (v.isInstanceOf[LocalDateTime]) { new values.LocalDateTimeValue(v.asInstanceOf[LocalDateTime]) }
     else if (v.isInstanceOf[RelationshipProxy]) { convertRelationship(v.asInstanceOf[RelationshipProxy])}
-    else if (v.isInstanceOf[PathProxy]) { convertPath(v.asInstanceOf[PathProxy])}
-    else if (v.isInstanceOf[Point]) { convertPoint(v.asInstanceOf[Point])}
-    else if (v.isInstanceOf[List[Value]]) { new values.ListValue(v.asInstanceOf[List[Value]]) }
-    else if (v.isInstanceOf[Map[String, Value]]) { new values.MapValue(v.asInstanceOf[Map[String, Value]]) }
+    else if (v.isInstanceOf[Path]) { convertPath(v.asInstanceOf[Path])}
+    else if (v.isInstanceOf[Neo4jPointValue]) { convertPoint(v.asInstanceOf[Neo4jPointValue])}
+    else if (v.isInstanceOf[Object]) { convertList(v.asInstanceOf[Object])}
+    else if (v.isInstanceOf[java.util.Map[String, Value]]) { new values.MapValue(v.asInstanceOf[java.util.Map[String, Value]]) }
     else if (v == null) { values.NullValue }
     else {new values.AnyValue(v)}
   }
 
   def convertNode(node: NodeProxy): values.NodeValue = {
     val id = node.getId
+    val neo4jLabels = node.getLabels
+    var labels = new ArrayBuffer[Label]
+    for (l <- neo4jLabels)
+      labels += convertLabel(l)
     val props: mutable.Map[String, AnyRef] = node.getAllProperties().asScala
     val propsMap = new mutable.HashMap[String, Value]()
     for(k <- props.keys) {
@@ -51,80 +60,132 @@ object ValueConverter {
       val v: Value = convertValue(v1)
       propsMap(k) = v
     }
-    val node1 = new values.Node(id, propsMap.toMap)
+    val node1 = new values.Node(id, propsMap.toMap,labels.toArray)
     new values.NodeValue(node1)
   }
 
   def convertRelationship(relationship: RelationshipProxy): values.RelationshipValue = {
     val id = relationship.getId
+    val relationshipType = convertType(relationship.getType)
     val props: mutable.Map[String, AnyRef] = relationship.getAllProperties().asScala
     val propsMap = new mutable.HashMap[String, Value]()
-    val startNodeId = relationship.getStartNodeId
-    val endNodeId = relationship.getEndNodeId
+    val startNode = convertNode(relationship.getStartNode.asInstanceOf[NodeProxy]).asNode()
+    val endNode = convertNode(relationship.getEndNode.asInstanceOf[NodeProxy]).asNode()
     for(k <- props.keys) {
       val v1 = props.get(k).getOrElse(null)
       val v: Value = convertValue(v1)
       propsMap(k) = v
     }
-    val rel = new values.Relationship(id, propsMap.toMap, startNodeId, endNodeId)
+    val rel = new values.Relationship(id, propsMap.toMap, startNode, endNode, relationshipType)
     new values.RelationshipValue(rel)
   }
 
-  def convertPath(path: PathProxy): values.PathValue = {
-    val nodes = path.nodes()
-    val relationships = path.relationships()
-    var newNodes= new ArrayBuffer[NodeValue]
-    var newRelationships = new ArrayBuffer[RelationshipValue]
-    for(n <- nodes)
-      newNodes += convertNode(n.asInstanceOf[NodeProxy])
-    for(r <- relationships)
-      newRelationships += convertRelationship(r.asInstanceOf[RelationshipProxy])
-    var paths = new ArrayBuffer[Value]
-    var i = 0
-    var ni = 0
-    var ri = 0
-    for ( i <- 0 to newNodes.size+newRelationships.size) {
-      if (i % 2 == 0) {
-        paths += newNodes(ni)
-        ni += 1
-      }
-      else {
-        paths += newRelationships(ri)
-        ri += 1
-      }
-    }
-    val path1 = new values.Path(paths.toArray)
+  def convertPath(path: Path): values.PathValue = {
+    var nodes = new ArrayBuffer[Node]
+    var relationships = new ArrayBuffer[Relationship]
+    val neo4jNodes = path.nodes()
+    for (n <- neo4jNodes)  nodes += toDriverNode(n)
+    val neo4jRelationship = path.relationships()
+    for (r <- neo4jRelationship) relationships += toDriverRelationship(r)
+    val path1 = new values.Path(nodes.toArray, relationships.toArray)
+    println(nodes)
+    println(relationships)
     new values.PathValue(path1)
   }
 
-  def convertDuration(duration: Duration): values.DurationValue = {
+  def convertDuration(duration: Neo4jDurationValue): values.DurationValue = {
     val temp = duration.getUnits
     val months = duration.get(temp.get(0))
     val days = duration.get(temp.get(1))
     val seconds = duration.get(temp.get(2))
     val nano = duration.get(temp.get(3))
-    println(months + " " + days + " " + seconds)
     val dur = new values.Duration(months, days, seconds, nano)
     new values.DurationValue(dur)
   }
 
-  def convertPoint(point: Point) : values.PointValue = {
-    if (point.isInstanceOf[Point2D]) {
-      val ss = point.srid
-      val xx = point.x
-      val yy = point.y
+  def convertPoint(point: Neo4jPointValue) : values.PointValue = {
+    if (point.coordinate().size == 2){
+      val ss = point.getCoordinateReferenceSystem.getCode
+      val xx = point.coordinate()(0)
+      val yy = point.coordinate()(1)
       val p = new values.Point2D(ss, xx, yy)
       new values.PointValue(p)
     }
     else {
-      val ss = point.srid
-      val xx = point.x
-      val yy = point.y
-      val zz = point.z
+      val ss = point.getCoordinateReferenceSystem.getCode
+      val xx = point.coordinate()(0)
+      val yy = point.coordinate()(1)
+      val zz = point.coordinate()(2)
       val p = new values.Point3D(ss, xx, yy, zz)
       new values.PointValue(p)
     }
+  }
 
+  def convertList(list: Object): values.ListValue = {
+    var newList = new ArrayBuffer[Value]
+    list match{
+      case listString:Array[Any] =>
+        for(i <- listString) {
+          val v = convertValue(i)
+          newList += v
+        }
+      case listDouble:Array[Double] =>
+        for(i <- listDouble) {
+          val v = convertValue(i)
+          newList += v
+        }
+      case listBool:Array[Boolean] =>
+        for(i <- listBool) {
+          val v = convertValue(i)
+          newList += v
+        }
+      case listLong:Array[Long] =>
+        for(i <- listLong) {
+          val v = convertValue(i)
+          newList += v
+        }
+      case listTime:Array[Temporal] =>
+        for(i <- listTime) {
+          val v = convertValue(i)
+          newList += v
+        }
+    }
+    new values.ListValue(newList)
+  }
+
+  def convertLabel(label: Neo4jLabel) : Label = Label(label.name)
+
+  def convertType(relationshipType: Neo4jType) : RelationshipType = RelationshipType(relationshipType.name())
+
+  def toDriverNode(neo4jNode: Neo4jNode): Node = {
+    val id = neo4jNode.getId
+    val neo4jLabels = neo4jNode.getLabels
+    var labels = new ArrayBuffer[Label]
+    for (l <- neo4jLabels)
+      labels += convertLabel(l)
+    val props: mutable.Map[String, AnyRef] = neo4jNode.getAllProperties().asScala
+    val propsMap = new mutable.HashMap[String, Value]()
+    for(k <- props.keys) {
+      val v1 = props.get(k).getOrElse(null)
+      val v: Value = convertValue(v1)
+      propsMap(k) = v
+    }
+    new values.Node(id, propsMap.toMap,labels.toArray)
+  }
+
+  def toDriverRelationship(neo4jRelationship: Neo4jRelationship): Relationship = {
+    val id = neo4jRelationship.getId
+    val relationshipType = convertType(neo4jRelationship.getType)
+    val props: mutable.Map[String, AnyRef] = neo4jRelationship.getAllProperties().asScala
+    val propsMap = new mutable.HashMap[String, Value]()
+    val startNode = convertNode(neo4jRelationship.getStartNode.asInstanceOf[NodeProxy]).asNode()
+    val endNode = convertNode(neo4jRelationship.getEndNode.asInstanceOf[NodeProxy]).asNode()
+    for(k <- props.keys) {
+      val v1 = props.get(k).getOrElse(null)
+      val v: Value = convertValue(v1)
+      propsMap(k) = v
+    }
+    new values.Relationship(id, propsMap.toMap, startNode, endNode, relationshipType)
   }
 
   def neo4jResultToDriverRecords(result: Neo4jResult): InternalRecords = {

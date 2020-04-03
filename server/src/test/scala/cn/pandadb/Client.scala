@@ -147,8 +147,8 @@ class Client {
   def numberTest() : Unit = {
     val cypher = "match (n1:Person) return min(n1.age),max(n1.age)"
     val result = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher))
-    Assert.assertEquals(40, result.records(0).get("max(n1.age)").asInt())
-    Assert.assertEquals(10, result.records(0).get("min(n1.age)").asInt())
+    Assert.assertEquals(40, result.records(0).get("max(n1.age)").asLong())
+    Assert.assertEquals(10, result.records(0).get("min(n1.age)").asLong())
   }
 
   @Test

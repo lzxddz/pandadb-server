@@ -21,7 +21,7 @@ trait Value extends Serializable {
   def asString(): String = { throw new NotImplementException()}
   def asNode(): Node = { throw new NotImplementException()}
   def asBytes(): Byte = { throw new NotImplementException()}
-  def asNumber(): Number = { throw new NotImplementException()}
+  def asNumber(): Long = { throw new NotImplementException()}
   def asDate(): LocalDate = { throw new NotImplementException()}
   def asTime(): OffsetTime = { throw new NotImplementException()}
   def asDateTime(): ZonedDateTime = { throw new NotImplementException()}
@@ -111,7 +111,11 @@ case class BytesValue(value: Byte) extends Value {
 case class NumberValue(value: Number) extends Value {
   override def getType(): String = Types.NUMBER.toString
   override def asAny(): Any = value
-  override def asNumber(): Number = value
+  override def asLong(): Long = value.longValue()
+  override def asFloat(): Double = value.doubleValue()
+  override def asInt(): Int = value.intValue()
+  override def asBytes(): Byte = value.byteValue()
+  def asShort(): Short = value.shortValue()
 
   override def toString: String = value.toString
 }

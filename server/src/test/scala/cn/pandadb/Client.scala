@@ -3,7 +3,7 @@ package cn.pandadb
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime, OffsetTime, ZoneId, ZoneOffset, ZonedDateTime}
 
 import cn.pandadb.driver.result.InternalRecords
-import cn.pandadb.driver.values.{BooleanValue, Duration, IntegerValue, Label, Node, Path, Point, Point2D, Point3D, Relationship, RelationshipType, StringValue, Value}
+import cn.pandadb.driver.values.{BooleanValue, Duration, IntegerValue, Label, Node, NullValue, Path, Point, Point2D, Point3D, Relationship, RelationshipType, StringValue, Value}
 import net.neoremind.kraps.RpcConf
 import net.neoremind.kraps.rpc.netty.NettyRpcEnvFactory
 import net.neoremind.kraps.rpc.{RpcAddress, RpcEndpointRef, RpcEnv, RpcEnvClientConfig}
@@ -44,6 +44,13 @@ class Client {
     val config = RpcEnvClientConfig(rpcConf, "panda-client")
     val rpcEnv: RpcEnv = NettyRpcEnvFactory.create(config)
     val endPointRef: RpcEndpointRef = rpcEnv.setupEndpointRef(RpcAddress("localhost", 52345), "panda-service")
+  }
+
+  @Test
+  def nullTest() : Unit = {
+    val cypher = "match (n) where n.name = 'test01' return n.height"
+    val result = endPointRef.askWithRetry[InternalRecords](RunQuery(cypher))
+    Assert.assertEquals(NullValue, result.records(0).get("n.height"))
   }
 
   @Test

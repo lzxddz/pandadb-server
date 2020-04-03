@@ -1,6 +1,6 @@
 package cn.pandadb.util
 
-import java.time.temporal.{Temporal, TemporalAccessor}
+import java.time.temporal.Temporal
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetTime, ZonedDateTime}
 
 import cn.pandadb.driver.values.{Duration, Label, Node, NodeValue, Point, Point2D, Relationship, RelationshipType, RelationshipValue, Value}
@@ -14,7 +14,6 @@ import org.neo4j.kernel.impl.core.{NodeProxy, RelationshipProxy}
 import org.neo4j.graphdb.Path
 import org.neo4j.values.storable.{DurationValue => Neo4jDurationValue, PointValue => Neo4jPointValue}
 import org.neo4j.graphdb.{Label => Neo4jLabel, Node => Neo4jNode, Relationship => Neo4jRelationship, RelationshipType => Neo4jType}
-import cn.pandadb.driver.values.Label
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -25,26 +24,28 @@ import scala.collection.mutable.ArrayBuffer
 object ValueConverter {
 
   def convertValue(v: Any): Value = {
-    if (v.isInstanceOf[NodeProxy]) { convertNode(v.asInstanceOf[NodeProxy])}
-    else if (v.isInstanceOf[Int]) { new values.IntegerValue(v.asInstanceOf[Int]) }
-    else if (v.isInstanceOf[Long]) { new values.IntegerValue(v.asInstanceOf[Long]) }
-    else if (v.isInstanceOf[String]) { new values.StringValue(v.asInstanceOf[String]) }
-    else if (v.isInstanceOf[Double]) { new values.FloatValue(v.asInstanceOf[Double]) }
-    else if (v.isInstanceOf[Boolean]) { new values.BooleanValue(v.asInstanceOf[Boolean]) }
-    else if (v.isInstanceOf[Number]) { new values.NumberValue(v.asInstanceOf[Number]) }
-    else if (v.isInstanceOf[Neo4jDurationValue]) { convertDuration(v.asInstanceOf[Neo4jDurationValue]) }
-    else if (v.isInstanceOf[LocalDate]) { new values.DateValue(v.asInstanceOf[LocalDate]) }
-    else if (v.isInstanceOf[OffsetTime]) { new values.TimeValue(v.asInstanceOf[OffsetTime]) }
-    else if (v.isInstanceOf[ZonedDateTime]) { new values.DateTimeValue(v.asInstanceOf[ZonedDateTime]) }
-    else if (v.isInstanceOf[LocalTime]) { new values.LocalTimeValue(v.asInstanceOf[LocalTime]) }
-    else if (v.isInstanceOf[LocalDateTime]) { new values.LocalDateTimeValue(v.asInstanceOf[LocalDateTime]) }
-    else if (v.isInstanceOf[RelationshipProxy]) { convertRelationship(v.asInstanceOf[RelationshipProxy])}
-    else if (v.isInstanceOf[Path]) { convertPath(v.asInstanceOf[Path])}
-    else if (v.isInstanceOf[Neo4jPointValue]) { convertPoint(v.asInstanceOf[Neo4jPointValue])}
-    else if (v.isInstanceOf[Object]) { convertList(v.asInstanceOf[Object])}
-    else if (v.isInstanceOf[java.util.Map[String, Value]]) { new values.MapValue(v.asInstanceOf[java.util.Map[String, Value]]) }
-    else if (v == null) { values.NullValue }
-    else {new values.AnyValue(v)}
+    v match {
+      case node: NodeProxy => convertNode(node)
+      case relationship: RelationshipProxy => convertRelationship(relationship)
+      case path: Path => convertPath(path)
+      case i: Int => values.IntegerValue(i)
+      case l: Long => values.IntegerValue(l)
+      case str: String => values.StringValue(str)
+      case d: Double => values.FloatValue(d)
+      case bool: Boolean => values.BooleanValue(bool)
+      case number: Number => values.NumberValue(number)
+      case duration: Neo4jDurationValue => convertDuration(duration)
+      case date: LocalDate => values.DateValue(date)
+      case time: OffsetTime => values.TimeValue(time)
+      case dateTime: ZonedDateTime => values.DateTimeValue(dateTime)
+      case localTime: LocalTime => values.LocalTimeValue(localTime)
+      case localDateTime: LocalDateTime => values.LocalDateTimeValue(localDateTime)
+      case point: Neo4jPointValue => convertPoint(point)
+      case map: Map[String, Value] => values.MapValue(map)
+      case list: Object => convertList(list)
+      case _ => if (v == null) values.NullValue
+                else new values.AnyValue(v)
+    }
   }
 
   def convertNode(node: NodeProxy): values.NodeValue = {
@@ -88,8 +89,6 @@ object ValueConverter {
     val neo4jRelationship = path.relationships()
     for (r <- neo4jRelationship) relationships += toDriverRelationship(r)
     val path1 = new values.Path(nodes.toArray, relationships.toArray)
-    println(nodes)
-    println(relationships)
     new values.PathValue(path1)
   }
 
